@@ -1878,10 +1878,17 @@ function makeanswerbox($anstype, $qn, $la, $options,$multi,$colorbox='') {
 		}
 
 		if (isset($domain)) {$fromto = array_map('trim',explode(",",$domain));} else {$fromto[0]=-10; $fromto[1]=10;}
+		$restrictvartoint = array();
 		if (count($variables)>1 && count($fromto)>2) {
 			uasort($variables,'lensort');
 			$newdomain = array();
 			foreach($variables as $i=>$v) {
+				if ($fromto[$i*2][0]=="Z") {
+					$restrictvartoint[] = true;
+					$fromto[$i*2] = substr($fromto[$i*2], 1);
+				} else {
+					$restrictvartoint[] = false;
+				}
 				if (isset($fromto[$i*2+1])) {
 					$newdomain[] = $fromto[2*$i];
 					$newdomain[] = $fromto[2*$i+1];
@@ -1893,8 +1900,14 @@ function makeanswerbox($anstype, $qn, $la, $options,$multi,$colorbox='') {
 			$fromto = $newdomain;
 			$variables = array_values($variables);
 		} else {
-		usort($variables,'lensort');
+			usort($variables,'lensort');
+			if (isset($fromto[2]) && $fromto[2]=="integers") {
+				$restrictvartoint = array(true);
+			} else {
+				$restrictvartoint = array(false);
+			}
 		}
+		
 		usort($ofunc,'lensort');
 		$vlist = implode("|",$variables);
 		$flist = implode('|',$ofunc);
@@ -1902,20 +1915,12 @@ function makeanswerbox($anstype, $qn, $la, $options,$multi,$colorbox='') {
 
 		for ($i = 0; $i < 20; $i++) {
 			for($j=0; $j < count($variables); $j++) {
-				if (isset($fromto[2]) && $fromto[2]=="integers") {
-					$tp[$j] = $RND->rand($fromto[0],$fromto[1]);
-				} else if (isset($fromto[2*$j+1])) {
-					if ($fromto[2*$j+1]==$fromto[2*$j]) {
-						$tp[$j] = $fromto[2*$j];
-					} else {
-						$tp[$j] = $fromto[2*$j] + ($fromto[2*$j+1]-$fromto[2*$j])*$RND->rand(0,499)/500.0 + 0.001;
-					}
+				if ($fromto[2*$j+1]==$fromto[2*$j]) {
+					$tp[$j] = $fromto[2*$j];
+				} else if ($restrictvartoint[2*$j]) {
+					$tp[$j] = $RND->rand($fromto[2*$j],$fromto[2*$j+1]);
 				} else {
-					if ($fromto[1]==$fromto[0]) {
-						$tp[$j] = $fromto[0];
-					} else {
-						$tp[$j] = $fromto[0] + ($fromto[1]-$fromto[0])*$RND->rand(0,499)/500.0 + 0.001;
-					}
+					$tp[$j] = $fromto[2*$j] + ($fromto[2*$j+1]-$fromto[2*$j])*$RND->rand(0,499)/500.0 + 0.001;
 				}
 			}
 			$pts[$i] = implode("~",$tp);
@@ -4446,10 +4451,17 @@ function scorepart($anstype,$qn,$givenans,$options,$multi) {
 		}
 		if (isset($domain)) {$fromto = array_map('trim',explode(",",$domain));} else {$fromto[0]=-10; $fromto[1]=10;}
 
+		$restrictvartoint = array();
 		if (count($variables)>1 && count($fromto)>2) {
 			uasort($variables,'lensort');
 			$newdomain = array();
 			foreach($variables as $i=>$v) {
+				if ($fromto[$i*2][0]=="Z") {
+					$restrictvartoint[] = true;
+					$fromto[$i*2] = substr($fromto[$i*2], 1);
+				} else {
+					$restrictvartoint[] = false;
+				}
 				if (isset($fromto[$i*2+1])) {
 					$newdomain[] = $fromto[2*$i];
 					$newdomain[] = $fromto[2*$i+1];
@@ -4461,7 +4473,12 @@ function scorepart($anstype,$qn,$givenans,$options,$multi) {
 			$fromto = $newdomain;
 			$variables = array_values($variables);
 		} else {
-		usort($variables,'lensort');
+			usort($variables,'lensort');
+			if (isset($fromto[2]) && $fromto[2]=="integers") {
+				$restrictvartoint = array(true);
+			} else {
+				$restrictvartoint = array(false);
+			}
 		}
 
 		if (count($ofunc)>0) {
@@ -4474,12 +4491,12 @@ function scorepart($anstype,$qn,$givenans,$options,$multi) {
 
 		for ($i = 0; $i < 20; $i++) {
 			for($j=0; $j < count($variables); $j++) {
-				if (isset($fromto[2]) && $fromto[2]=="integers") {
-					$tps[$i][$j] = $RND->rand($fromto[0],$fromto[1]);
-				} else if (isset($fromto[2*$j+1])) {
-					$tps[$i][$j] = $fromto[2*$j] + ($fromto[2*$j+1]-$fromto[2*$j])*$RND->rand(0,499)/500.0 + 0.001;
+				if ($fromto[2*$j+1]==$fromto[2*$j]) {
+					$tps[$i][$j] = $fromto[2*$j];
+				} else if ($restrictvartoint[2*$j]) {
+					$tps[$i][$j] = $RND->rand($fromto[2*$j],$fromto[2*$j+1]);
 				} else {
-					$tps[$i][$j] = $fromto[0] + ($fromto[1]-$fromto[0])*$RND->rand(0,499)/500.0 + 0.001;
+					$tps[$i][$j] = $fromto[2*$j] + ($fromto[2*$j+1]-$fromto[2*$j])*$RND->rand(0,499)/500.0 + 0.001;
 				}
 			}
 		}
